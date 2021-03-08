@@ -148,6 +148,7 @@ disable=print-statement,
         R0205, # useless-object-inheritance
         E1120, # no-value-for-parameter, e.g. click
         C0103, # invalid-name
+		E0401, # import-error
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
