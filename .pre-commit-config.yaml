@@ -1,0 +1,65 @@
+exclude: tests/.*\.xls.*
+repos:
+- hooks:
+  - id: check-merge-conflict
+  - id: check-case-conflict
+  - id: end-of-file-fixer
+  - id: check-added-large-files
+    args: [--maxkb=100000]
+  - id: check-executables-have-shebangs
+  - id: detect-private-key
+  repo: git@github.com:pre-commit/pre-commit-hooks.git
+  rev: v3.2.0
+- repo: git@github.com:commitizen-tools/commitizen.git
+  hooks:
+  - id: commitizen
+    stages: [commit-msg]
+  rev: v2.11.0
+- hooks:
+  - entry: isort
+    id: isort
+    language: system
+    name: isort
+    stages:
+    - commit
+    types:
+    - python
+    args:
+    - --settings-path=.isort.cfg
+  - entry: black
+    id: black
+    language: system
+    name: black
+    stages:
+    - commit
+    types:
+    - python
+    args: [-l 120]
+  - entry: pylint
+    id: pylint
+    language: system
+    name: pylint
+    stages:
+    - commit
+    types:
+    - python
+    verbose: true
+    args:
+    - --rcfile=.pylintrc
+  - entry: pydocstyle
+    id: pydocstyle
+    language: system
+    name: pydocstyle
+    stages:
+    - commit
+    types:
+    - python
+    verbose: true
+    args: [--config=.pydocstyle.ini]
+  repo: local
+- hooks:
+  - additional_dependencies:
+    - black==19.10b0
+    id: blacken-docs
+  repo: git@github.com:asottile/blacken-docs.git
+  rev: v1.8.0
