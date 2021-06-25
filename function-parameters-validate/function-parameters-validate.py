@@ -3,6 +3,7 @@ A simple example of validating function parameters with decorator, featuring typ
 """
 # pylint: disable=W0622,E0611,C0112
 import inspect
+import re
 import sys
 
 # py3, py2 compatible import
@@ -25,6 +26,7 @@ class Schema:
     def __init__(self):
         self._type = _Null()
         self._option = _Null()
+        self._f = _Null()
 
     def type(self, v):
         """
@@ -41,12 +43,28 @@ class Schema:
         self._option = v
         return self
 
+    def func(self, v):
+        """
+        Set value validation function.
+        """
+        assert callable(v), "A callable function is required."
+        spec = inspect.getargspec(v)
+        assert len(spec.args) >= 1, "Validation function should at least accept one argument."
+        assert (
+            len(spec.args) - len(spec.defaults or []) <= 1
+        ), "Validate function should at most accept one required argument."
+        self._f = v
+        return self
+
     def validate(self, v):
         if not isinstance(self._type, _Null) and not isinstance(v, self._type):
-            raise TypeError("Expecting type {} found `{}`.".format(self._type, v))
+            raise TypeError("Expecting type {} found `{}`.".format(self._type, type(v)))
 
         if not isinstance(self._option, _Null) and not v in self._option:
             raise InvalidOption("Value `{}` is not in option `{}`.".format(v, self._option))
+
+        if not isinstance(self._f, _Null) and not self._f(v):
+            raise InvalidOption("Value `{}` is not accepted by validate function `{}`.".format(v, self._f.__name__))
         return
 
 
@@ -80,15 +98,22 @@ def input(**kwargs):
     return inner
 
 
+def validate_chr_name(v):
+    return bool(re.match(r"(?i)^(?:chr|)(\d+|X|Y|MT)$", v))
+
+
 # @input(x=Schema().type(int).option([1, 2, 10]), y=Schema().type(str))
-@input(x=Schema().type(int).option(range(0, 10)), y=Schema().type(str))
+@input(x=Schema().type(int).option(range(0, 10)), y=Schema().type(str).func(validate_chr_name))
 def main(x, y):
-    return "{}, {}".format(x, y)
+    return "Accepted: {}, {}".format(x, y)
 
 
 if __name__ == "__main__":
-    print(main(2, "Hello"))
+    # pass
+    # print(main(2, "chrX"))
     # Invalid option error
-    print(main(11, "Hello"))
+    # print(main(11, "1"))
     # Type error
-    print(main(2, 11))
+    # print(main(2, 11))
+    # Invalid option, not accepted by validation function.
+    print(main(2, "chr1_dafwfif"))
